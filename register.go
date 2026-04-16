@@ -1,0 +1,16 @@
+// Package geocty provides geographic, solar/astronomical, geodesic, and
+// geometric functions for use in go-cty / HCL2 evaluation contexts.
+//
+// See GetGeoFunctions for registration.
+package geocty
+
+import "github.com/zclconf/go-cty/cty/function"
+
+// GetGeoFunctions returns all geographic cty functions for registration in an
+// eval context.
+func GetGeoFunctions() map[string]function.Function {
+	return map[string]function.Function{
+		"geo_point":  GeoPointFunc,
+		"geo_format": GeoFormatFunc,
+	}
+}
