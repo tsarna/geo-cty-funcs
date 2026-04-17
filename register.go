@@ -19,5 +19,8 @@ func GetGeoFunctions() map[string]function.Function {
 		"sun_position":    SunPositionFunc,
 		"moon_position":   MoonPositionFunc,
 		"moon_phase":      MoonPhaseFunc,
+		"geo_inverse":     GeoInverseFunc,
+		"geo_destination": GeoDestinationFunc,
+		"geo_waypoints":   GeoWaypointsFunc,
 	}
 }
