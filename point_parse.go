@@ -162,6 +162,68 @@ func hemisphereSign(hemi string, ax axis) (float64, error) {
 	return 0, fmt.Errorf("unknown axis")
 }
 
+// parseCombinedCoord splits a combined "lat,lon" or "lat lon" string into
+// two coordinates and parses each. Handles all geo_format output formats:
+//
+//   - Comma-separated: "37.7749,-122.4194" or "37.7749,-122.4194,11"
+//   - DMS with hemisphere: `37°46'29.6"N 122°25'9.8"W`
+//   - DMS signed: `37°46'29.6" -122°25'9.8"`
+func parseCombinedCoord(s string) (float64, float64, error) {
+	s = strings.TrimSpace(s)
+
+	// Comma-separated: split on comma, take first two parts.
+	if strings.Contains(s, ",") {
+		parts := strings.SplitN(s, ",", 4)
+		if len(parts) < 2 {
+			return 0, 0, fmt.Errorf("expected lat,lon in %q", s)
+		}
+		lat, err := parseCoord(parts[0], axisLat)
+		if err != nil {
+			return 0, 0, fmt.Errorf("lat: %w", err)
+		}
+		lon, err := parseCoord(parts[1], axisLon)
+		if err != nil {
+			return 0, 0, fmt.Errorf("lon: %w", err)
+		}
+		return lat, lon, nil
+	}
+
+	// DMS with hemisphere letters: split after N or S followed by whitespace.
+	upper := strings.ToUpper(s)
+	for i := 0; i < len(upper)-1; i++ {
+		if (upper[i] == 'N' || upper[i] == 'S') && upper[i+1] == ' ' {
+			latStr := strings.TrimSpace(s[:i+1])
+			lonStr := strings.TrimSpace(s[i+2:])
+			if lonStr == "" {
+				continue
+			}
+			lat, latErr := parseCoord(latStr, axisLat)
+			lon, lonErr := parseCoord(lonStr, axisLon)
+			if latErr == nil && lonErr == nil {
+				return lat, lon, nil
+			}
+		}
+	}
+
+	// Signed DMS: split after closing " followed by whitespace.
+	for i := 0; i < len(s)-1; i++ {
+		if s[i] == '"' && s[i+1] == ' ' {
+			latStr := strings.TrimSpace(s[:i+1])
+			lonStr := strings.TrimSpace(s[i+2:])
+			if lonStr == "" {
+				continue
+			}
+			lat, latErr := parseCoord(latStr, axisLat)
+			lon, lonErr := parseCoord(lonStr, axisLon)
+			if latErr == nil && lonErr == nil {
+				return lat, lon, nil
+			}
+		}
+	}
+
+	return 0, 0, fmt.Errorf("could not parse combined coordinate %q", s)
+}
+
 func validateCoord(v float64, ax axis) error {
 	switch ax {
 	case axisLat:

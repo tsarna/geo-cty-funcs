@@ -79,10 +79,18 @@ func solarMidnight(lat, lon float64, d time.Time) (time.Time, bool) {
 
 // nextOccurrence implements the "next occurrence" algorithm.
 // It finds the next time after t where (event + offset) is in the future,
-// advancing day-by-day through polar regions up to maxPolarSearch days.
-// All computation is done in UTC. The search starts one day before the
-// current UTC date to catch events like solar midnight that span two
-// calendar days.
+// advancing day-by-day up to maxPolarSearch days. All computation is in UTC.
+//
+// The search starts one day before the current UTC date to catch events
+// like solar midnight that span two calendar days (e.g. calling at 03:00 UTC
+// when tonight's solar midnight is the midpoint of yesterday's sunset and
+// today's sunrise).
+//
+// In polar regions where sunrise or sunset does not occur for extended periods,
+// the per-day event functions return false and the loop advances until both
+// the required events exist on consecutive days. This means solar_noon and
+// solar_midnight return the first meaningful occurrence after polar conditions
+// end — they do not attempt to interpolate across months-long polar gaps.
 func nextOccurrence(ef eventFunc, lat, lon float64, offset time.Duration, t time.Time) (time.Time, error) {
 	utc := t.UTC()
 	d := time.Date(utc.Year(), utc.Month(), utc.Day()-1, 0, 0, 0, 0, time.UTC)

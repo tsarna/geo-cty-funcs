@@ -180,30 +180,65 @@ func TestGeoFormat_DMS(t *testing.T) {
 
 func TestGeoFormat_RoundTrip(t *testing.T) {
 	orig := mustCallPoint(t, cty.StringVal(`37°46'29"N`), cty.StringVal(`122°25'9"W`))
-	formatted := mustFormat(t, orig, cty.StringVal("dms"))
-	// Re-parse and compare
-	parts := splitDMSPair(formatted)
-	back := mustCallPoint(t, cty.StringVal(parts[0]), cty.StringVal(parts[1]))
 	origAttrs := orig.AsValueMap()
-	backAttrs := back.AsValueMap()
-	if math.Abs(mustFloat(t, origAttrs["lat"])-mustFloat(t, backAttrs["lat"])) > 0.001 {
-		t.Errorf("lat drifted after round trip: %v vs %v",
-			mustFloat(t, origAttrs["lat"]), mustFloat(t, backAttrs["lat"]))
-	}
-	if math.Abs(mustFloat(t, origAttrs["lon"])-mustFloat(t, backAttrs["lon"])) > 0.001 {
-		t.Errorf("lon drifted after round trip")
+
+	// Round-trip through each format using single-string geo_point.
+	for _, format := range []string{"decimal", "dms", "dms_ascii", "dms_signed"} {
+		formatted := mustFormat(t, orig, cty.StringVal(format))
+		back := mustCallPoint(t, cty.StringVal(formatted))
+		backAttrs := back.AsValueMap()
+		if math.Abs(mustFloat(t, origAttrs["lat"])-mustFloat(t, backAttrs["lat"])) > 0.001 {
+			t.Errorf("%s round trip: lat drifted: %v vs %v",
+				format, mustFloat(t, origAttrs["lat"]), mustFloat(t, backAttrs["lat"]))
+		}
+		if math.Abs(mustFloat(t, origAttrs["lon"])-mustFloat(t, backAttrs["lon"])) > 0.001 {
+			t.Errorf("%s round trip: lon drifted", format)
+		}
 	}
 }
 
-// Splits `"37°46'29.6\"N 122°25'9.8\"W"` into its two halves. DMS format always
-// has exactly one space between lat and lon.
-func splitDMSPair(s string) [2]string {
-	for i := 0; i < len(s); i++ {
-		if s[i] == ' ' {
-			return [2]string{s[:i], s[i+1:]}
-		}
+func TestGeoPoint_CombinedDecimal(t *testing.T) {
+	p := mustCallPoint(t, cty.StringVal("37.7749,-122.4194"))
+	attrs := p.AsValueMap()
+	if mustFloat(t, attrs["lat"]) != 37.7749 {
+		t.Errorf("lat = %v, want 37.7749", mustFloat(t, attrs["lat"]))
 	}
-	return [2]string{s, ""}
+	if mustFloat(t, attrs["lon"]) != -122.4194 {
+		t.Errorf("lon = %v, want -122.4194", mustFloat(t, attrs["lon"]))
+	}
+}
+
+func TestGeoPoint_CombinedDMS(t *testing.T) {
+	p := mustCallPoint(t, cty.StringVal(`37°46'29"N 122°25'9"W`))
+	attrs := p.AsValueMap()
+	wantLat := 37 + 46.0/60 + 29.0/3600
+	if math.Abs(mustFloat(t, attrs["lat"])-wantLat) > 1e-9 {
+		t.Errorf("lat = %v, want %v", mustFloat(t, attrs["lat"]), wantLat)
+	}
+}
+
+func TestGeoPoint_CombinedWithBase(t *testing.T) {
+	base := cty.ObjectVal(map[string]cty.Value{
+		"alt":   cty.NumberFloatVal(11.0),
+		"speed": cty.NumberFloatVal(5.0),
+	})
+	p := mustCallPoint(t, cty.StringVal("37.7749,-122.4194"), base)
+	attrs := p.AsValueMap()
+	if mustFloat(t, attrs["lat"]) != 37.7749 {
+		t.Errorf("lat wrong")
+	}
+	if mustFloat(t, attrs["alt"]) != 11.0 {
+		t.Errorf("alt not preserved")
+	}
+	if mustFloat(t, attrs["speed"]) != 5.0 {
+		t.Errorf("speed not preserved")
+	}
+}
+
+func TestGeoPoint_CombinedInvalid(t *testing.T) {
+	if _, err := GeoPointFunc.Call([]cty.Value{cty.StringVal("not a coord pair")}); err == nil {
+		t.Error("expected error for unparseable combined string")
+	}
 }
 
 func TestGeoFormat_UnknownFormat(t *testing.T) {

@@ -40,12 +40,17 @@ p2 = {lat = 51.5074, lon = -0.1278, alt = 11.0, speed = 10.0}
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `geo_point` | `geo_point(lat, lon[, base])` | Constructs a point; lat/lon may be numbers or parseable strings |
+| `geo_point` | `geo_point(combined)` or `geo_point(lat, lon[, base])` | Constructs a point from a combined string or separate lat/lon |
 | `geo_format` | `geo_format(point[, format])` | Formats a point as a string |
 
-#### `geo_point(lat, lon[, base])`
+#### `geo_point(combined[, base])` or `geo_point(lat, lon[, base])`
 
-`lat` and `lon` may each be a **number** (signed decimal degrees) or a **string** in any of these forms:
+A single combined string is parsed by splitting on `,` (decimal formats) or on
+the hemisphere-letter boundary (DMS formats). All `geo_format` output formats
+round-trip through the single-string form.
+
+When two separate values are given, `lat` and `lon` may each be a **number**
+(signed decimal degrees) or a **string** in any of these forms:
 
 - Signed decimal: `"37.7749"`, `"-122.4194"`
 - Decimal with hemisphere: `"37.7749 N"`, `"N 37.7749"`, `"122.4194W"`
@@ -56,9 +61,12 @@ p2 = {lat = 51.5074, lon = -0.1278, alt = 11.0, speed = 10.0}
 If `base` is supplied, the result is a copy of `base` with `lat`/`lon` overwritten.
 
 ```hcl
+geo_point("37.7749,-122.4194")
+geo_point("37°46'29\"N 122°25'9\"W")
 geo_point(37.7749, -122.4194)
 geo_point("37°46'29\"N", "122°25'9\"W")
 geo_point(37.7749, -122.4194, {alt = 11.0, track = 90.0})
+geo_point("37.7749,-122.4194", {alt = 11.0})
 ```
 
 #### `geo_format(point[, format])`
@@ -86,8 +94,13 @@ f(point, offset, t)
 
 They return the **next occurrence** after `t` (default: `now()`) of the solar
 event plus `offset` (default: zero). If the computed target is in the past,
-the function advances to the next day. In polar regions where the event does
-not occur, the function searches forward up to 400 days.
+the function advances to the next day. All times are UTC.
+
+In **polar regions** where the sun does not rise or set for extended periods,
+the functions search forward day-by-day (up to 400 days) until the event
+occurs again. `solar_noon` and `solar_midnight` require both sunrise and
+sunset to exist on the relevant day(s); during polar day or polar night they
+return the first meaningful occurrence after polar conditions end.
 
 | Function | Description |
 |----------|-------------|

@@ -169,6 +169,81 @@ func TestParseCoord_Errors(t *testing.T) {
 	}
 }
 
+func TestParseCombinedCoord_Decimal(t *testing.T) {
+	lat, lon, err := parseCombinedCoord("37.7749,-122.4194")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if lat != 37.7749 {
+		t.Errorf("lat = %v, want 37.7749", lat)
+	}
+	if lon != -122.4194 {
+		t.Errorf("lon = %v, want -122.4194", lon)
+	}
+}
+
+func TestParseCombinedCoord_DecimalAlt(t *testing.T) {
+	lat, lon, err := parseCombinedCoord("37.7749,-122.4194,11")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if lat != 37.7749 || lon != -122.4194 {
+		t.Errorf("got (%v, %v)", lat, lon)
+	}
+}
+
+func TestParseCombinedCoord_DMS(t *testing.T) {
+	lat, lon, err := parseCombinedCoord(`37°46'29.6"N 122°25'9.8"W`)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	wantLat := 37 + 46.0/60 + 29.6/3600
+	wantLon := -(122 + 25.0/60 + 9.8/3600)
+	if !nearlyEqual(lat, wantLat, 1e-9) {
+		t.Errorf("lat = %v, want %v", lat, wantLat)
+	}
+	if !nearlyEqual(lon, wantLon, 1e-9) {
+		t.Errorf("lon = %v, want %v", lon, wantLon)
+	}
+}
+
+func TestParseCombinedCoord_DMSAscii(t *testing.T) {
+	lat, lon, err := parseCombinedCoord(`37d46'29.6"N 122d25'9.8"W`)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	wantLat := 37 + 46.0/60 + 29.6/3600
+	wantLon := -(122 + 25.0/60 + 9.8/3600)
+	if !nearlyEqual(lat, wantLat, 1e-9) || !nearlyEqual(lon, wantLon, 1e-9) {
+		t.Errorf("got (%v, %v)", lat, lon)
+	}
+}
+
+func TestParseCombinedCoord_DMSSigned(t *testing.T) {
+	lat, lon, err := parseCombinedCoord(`37°46'29.6" -122°25'9.8"`)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	wantLat := 37 + 46.0/60 + 29.6/3600
+	wantLon := -(122 + 25.0/60 + 9.8/3600)
+	if !nearlyEqual(lat, wantLat, 1e-9) || !nearlyEqual(lon, wantLon, 1e-9) {
+		t.Errorf("got (%v, %v)", lat, lon)
+	}
+}
+
+func TestParseCombinedCoord_Errors(t *testing.T) {
+	cases := []string{
+		"",
+		"not coordinates",
+		"37.7749",  // single value, no comma or split point
+	}
+	for _, c := range cases {
+		if _, _, err := parseCombinedCoord(c); err == nil {
+			t.Errorf("parseCombinedCoord(%q): expected error", c)
+		}
+	}
+}
+
 func TestValidateCoord_RangeErrors(t *testing.T) {
 	if err := validateCoord(91, axisLat); err == nil {
 		t.Error("expected error for lat 91")
