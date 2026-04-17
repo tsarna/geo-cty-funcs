@@ -10,7 +10,11 @@ import "github.com/zclconf/go-cty/cty/function"
 // eval context.
 func GetGeoFunctions() map[string]function.Function {
 	return map[string]function.Function{
-		"geo_point":  GeoPointFunc,
-		"geo_format": GeoFormatFunc,
+		"geo_point":       GeoPointFunc,
+		"geo_format":      GeoFormatFunc,
+		"sunrise":         SunriseFunc,
+		"sunset":          SunsetFunc,
+		"solar_noon":      SolarNoonFunc,
+		"solar_midnight":  SolarMidnightFunc,
 	}
 }
