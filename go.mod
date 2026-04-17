@@ -3,6 +3,7 @@ module github.com/tsarna/geo-cty-funcs
 go 1.25.8
 
 require (
+	github.com/kixorz/suncalc v1.0.0
 	github.com/nathan-osman/go-sunrise v1.1.0
 	github.com/tsarna/time-cty-funcs v0.2.0
 	github.com/zclconf/go-cty v1.18.0

@@ -102,9 +102,9 @@ func TestSolarNoon_Basic(t *testing.T) {
 		t.Errorf("solar_noon should be after ref time")
 	}
 
-	// Solar noon in SF ~12:15 PDT = ~19:15 UTC.
-	if got.Hour() < 18 || got.Hour() > 21 {
-		t.Errorf("solar noon hour UTC = %d, expected ~19 for SF", got.Hour())
+	// Solar noon in SF ≈ 20:17 UTC (midpoint of rise ~14:12 and set ~02:21 next day).
+	if got.Hour() < 19 || got.Hour() > 21 {
+		t.Errorf("solar noon hour UTC = %d, expected ~20 for SF in March", got.Hour())
 	}
 }
 
@@ -121,52 +121,48 @@ func TestSolarMidnight_Basic(t *testing.T) {
 		t.Errorf("solar_midnight should be after ref time")
 	}
 
-	// Solar midnight in SF should be near 00:15 PDT = ~07:15 UTC.
-	if got.Hour() < 5 || got.Hour() > 10 {
-		t.Errorf("solar midnight hour UTC = %d, expected ~7 for SF", got.Hour())
+	// Solar midnight in SF ≈ 08:16 UTC (midpoint of sunset ~02:21 and next sunrise ~14:11).
+	if got.Hour() < 7 || got.Hour() > 9 {
+		t.Errorf("solar midnight hour UTC = %d, expected ~8 for SF in March", got.Hour())
 	}
 }
 
-func TestSunrise_PolarRegion(t *testing.T) {
-	// Reykjavík in June — sun doesn't set. Sunrise should still be found
-	// by searching forward to a date where it does rise again.
+func TestSunrise_HighLatitude(t *testing.T) {
+	// Reykjavík at 64°N on the summer solstice still has sunrise/sunset per
+	// go-sunrise (~02:55 rise, ~00:03 set UTC). Verify we get a reasonable result.
 	reykjavik := sfPoint(64.1466, -21.9426)
-	// June 21 is near the summer solstice — continuous daylight.
 	refTime := time.Date(2025, 6, 21, 12, 0, 0, 0, time.UTC)
 
-	// In polar summer the sun doesn't set, but it still rises each day (it dips
-	// close to the horizon). At Reykjavík's latitude (64°N) there should still
-	// be a mathematical sunrise/sunset. If go-sunrise returns zero for this date,
-	// the function will search forward until it finds one.
 	result, err := SunriseFunc.Call([]cty.Value{reykjavik, timecty.NewTimeCapsule(refTime)})
 	if err != nil {
-		// If we get an error here, it means even searching forward didn't help.
-		// At 64°N this shouldn't happen — only ~67°+ is truly polar.
-		t.Logf("sunrise at 64°N in June returned error (may be expected): %v", err)
-		return
+		t.Fatalf("sunrise at Reykjavík: %v", err)
 	}
 	got := mustTime(t, result)
 	if !got.After(refTime) {
 		t.Errorf("result %v should be after ref %v", got, refTime)
 	}
+	// Next sunrise should be June 22 ~02:55 UTC.
+	if got.Day() != 22 || got.Hour() > 4 {
+		t.Errorf("expected June 22 ~02:55 UTC, got %v", got)
+	}
 }
 
-func TestSunrise_TruePolar(t *testing.T) {
-	// Svalbard at 78°N in June — true polar day, no sunset for months.
+func TestSunset_PolarDay(t *testing.T) {
+	// Svalbard at 78°N in June — true polar day, no sunset until September.
 	svalbard := sfPoint(78.2, 15.6)
 	refTime := time.Date(2025, 6, 21, 0, 0, 0, 0, time.UTC)
 
-	// go-sunrise should return zero times. Our function will search forward
-	// and eventually find the first sunrise after polar summer ends.
 	result, err := SunsetFunc.Call([]cty.Value{svalbard, timecty.NewTimeCapsule(refTime)})
 	if err != nil {
-		t.Logf("sunset at Svalbard in June: %v (expected — polar day)", err)
-		return
+		t.Fatalf("sunset at Svalbard: %v", err)
 	}
 	got := mustTime(t, result)
-	// The first sunset should be months later (August-ish).
-	if got.Month() < time.July {
-		t.Errorf("first sunset at Svalbard after June 21 should be July+, got %v", got)
+	if !got.After(refTime) {
+		t.Errorf("result %v should be after ref %v", got, refTime)
+	}
+	// First sunset at 78°N after June 21 is late August (around Aug 25).
+	if got.Month() != time.August && got.Month() != time.September {
+		t.Errorf("first sunset at Svalbard after June 21 should be Aug/Sep, got %v", got)
 	}
 }
 
