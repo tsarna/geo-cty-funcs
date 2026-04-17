@@ -34,7 +34,7 @@ var (
 			`\s*([NSEWnsew])?$`)
 )
 
-// parseCoord parses a coordinate string per GEO-SPEC.md. ax selects whether the
+// parseCoord parses a coordinate string. ax selects whether the
 // string represents a latitude or longitude; hemisphere letters are checked
 // against the axis.
 func parseCoord(raw string, ax axis) (float64, error) {

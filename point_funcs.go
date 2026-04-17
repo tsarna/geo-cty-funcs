@@ -10,7 +10,7 @@ import (
 
 // GeoPointFunc constructs a point object from lat/lon values, optionally
 // merging onto a base object. Numbers are treated as signed decimal degrees;
-// strings are parsed per GEO-SPEC.md (decimal, hemisphere, DMS).
+// strings are parsed as decimal, hemisphere-annotated, or DMS.
 var GeoPointFunc = function.New(&function.Spec{
 	Description: "Constructs a point object from lat/lon, optionally merged onto a base object.",
 	Params: []function.Parameter{
@@ -70,7 +70,7 @@ var GeoPointFunc = function.New(&function.Spec{
 })
 
 // GeoFormatFunc formats a point as a string using one of the named formats
-// from GEO-SPEC.md (decimal, decimal_alt, dms, dms_ascii, dms_signed).
+// (decimal, decimal_alt, dms, dms_ascii, dms_signed).
 var GeoFormatFunc = function.New(&function.Spec{
 	Description: "Formats a point as a string.",
 	Params: []function.Parameter{

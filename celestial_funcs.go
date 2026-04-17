@@ -129,8 +129,8 @@ var MoonPhaseFunc = function.New(&function.Spec{
 })
 
 // southAzToNorthDeg converts an azimuth in radians measured clockwise from
-// south (suncalc convention) to degrees measured clockwise from north (spec
-// convention: 0=N, 90=E, 180=S, 270=W).
+// south (suncalc convention) to degrees measured clockwise from north
+// (0=N, 90=E, 180=S, 270=W).
 func southAzToNorthDeg(azRad float64) float64 {
 	deg := math.Mod((azRad+math.Pi)*180/math.Pi, 360)
 	if deg < 0 {

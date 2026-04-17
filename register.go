@@ -21,6 +21,10 @@ func GetGeoFunctions() map[string]function.Function {
 		"moon_phase":      MoonPhaseFunc,
 		"geo_inverse":     GeoInverseFunc,
 		"geo_destination": GeoDestinationFunc,
-		"geo_waypoints":   GeoWaypointsFunc,
+		"geo_waypoints":       GeoWaypointsFunc,
+		"geo_area":            GeoAreaFunc,
+		"geo_contains":        GeoContainsFunc,
+		"geo_nearest":         GeoNearestFunc,
+		"geo_line_intersect":  GeoLineIntersectFunc,
 	}
 }

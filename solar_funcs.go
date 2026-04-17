@@ -77,7 +77,7 @@ func solarMidnight(lat, lon float64, d time.Time) (time.Time, bool) {
 	return mid, true
 }
 
-// nextOccurrence implements the "next occurrence" algorithm from GEO-SPEC.md.
+// nextOccurrence implements the "next occurrence" algorithm.
 // It finds the next time after t where (event + offset) is in the future,
 // advancing day-by-day through polar regions up to maxPolarSearch days.
 // All computation is done in UTC.
