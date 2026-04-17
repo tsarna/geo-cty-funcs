@@ -127,6 +127,31 @@ func TestSolarMidnight_Basic(t *testing.T) {
 	}
 }
 
+func TestSolarMidnight_CrossDayBoundary(t *testing.T) {
+	// At 03:38 UTC, the user is in late evening local time (e.g. US East).
+	// Solar midnight for "tonight" is the midpoint of yesterday's sunset and
+	// today's sunrise — it should be only a few hours away, not 25h.
+	nyc := sfPoint(40.7128, -74.0060)
+	refTime := time.Date(2026, 4, 17, 3, 38, 0, 0, time.UTC)
+
+	result, err := SolarMidnightFunc.Call([]cty.Value{nyc, timecty.NewTimeCapsule(refTime)})
+	if err != nil {
+		t.Fatalf("solar_midnight: %v", err)
+	}
+	got := mustTime(t, result)
+
+	if !got.After(refTime) {
+		t.Errorf("solar_midnight should be after ref time")
+	}
+
+	// Solar midnight for NYC on the night of Apr 16/17 should be around
+	// Apr 17 05:00 UTC — within ~2 hours, NOT 25 hours away.
+	hoursAway := got.Sub(refTime).Hours()
+	if hoursAway > 4 {
+		t.Errorf("solar midnight is %.1f hours away (got %v), expected <4h", hoursAway, got)
+	}
+}
+
 func TestSunrise_HighLatitude(t *testing.T) {
 	// Reykjavík at 64°N on the summer solstice still has sunrise/sunset per
 	// go-sunrise (~02:55 rise, ~00:03 set UTC). Verify we get a reasonable result.
