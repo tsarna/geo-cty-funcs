@@ -27,7 +27,10 @@ funcs := geocty.GetGeoFunctions()
 
 A `point` is a plain cty object with at least `lat` and `lon` number
 attributes (signed decimal degrees). Additional fields (e.g. `alt`, `speed`,
-`track`, `time`) are preserved by functions that return derived points.
+`track`, `time`) are preserved by functions that return derived points. The
+field names are aligned with the
+[GPSD JSON `TPV` record](https://gpsd.gitlab.io/gpsd/gpsd_json.html), so data
+from a GPSD source can flow through without translation.
 
 ```hcl
 p = {lat = 37.7749, lon = -122.4194}
