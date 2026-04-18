@@ -7,7 +7,7 @@ require (
 	github.com/kixorz/suncalc v1.0.0
 	github.com/natemcintosh/geographiclib-go v0.1.0
 	github.com/nathan-osman/go-sunrise v1.1.0
-	github.com/tsarna/time-cty-funcs v0.2.0
+	github.com/tsarna/time-cty-funcs v0.2.1
 	github.com/zclconf/go-cty v1.18.1
 )
 
