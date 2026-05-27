@@ -3,7 +3,7 @@ module github.com/tsarna/geo-cty-funcs
 go 1.25.8
 
 require (
-	github.com/golang/geo v0.0.0-20260512202753-e3c51de6d1b6
+	github.com/golang/geo v0.0.0-20260526120156-e21b7802b0ee
 	github.com/kixorz/suncalc v1.0.0
 	github.com/natemcintosh/geographiclib-go v0.1.0
 	github.com/nathan-osman/go-sunrise v1.1.0
