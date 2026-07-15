@@ -1,5 +1,36 @@
 # Changelog
 
+## v0.4.0
+
+### Changed
+
+- **BREAKING: the functions are namespaced.** The geographic, geodesic, and geometric
+  functions — whose bare names (`point`, `area`, `contains`, `nearest`) would be too
+  generic to expose globally — move under `geo::`; the solar-event and celestial-position
+  functions move under `sky::`. HCL parses `a::b(x)` natively as a single flat map key, so
+  this is a naming change, not a structural one, and the leaf names shed the prefix the
+  flat names carried. **Existing `.vcl`/`.cty` files must be updated.**
+
+  | was | is |
+  | --- | --- |
+  | `geo_point`, `geo_format` | `geo::point`, `geo::format` |
+  | `geo_inverse`, `geo_destination`, `geo_waypoints` | `geo::inverse`, `geo::destination`, `geo::waypoints` |
+  | `geo_area`, `geo_contains`, `geo_nearest`, `geo_line_intersect` | `geo::area`, `geo::contains`, `geo::nearest`, `geo::line_intersect` |
+  | `sunrise`, `sunset`, `solar_noon`, `solar_midnight` | `sky::sunrise`, `sky::sunset`, `sky::solar_noon`, `sky::solar_midnight` |
+  | `sun_position`, `moon_position`, `moon_phase` | `sky::sun_position`, `sky::moon_position`, `sky::moon_phase` |
+
+- `Externs()` now returns `map[string][]byte` (one file per namespace: `externs/geo.cty`,
+  `externs/sky.cty`) rather than a single `[]byte`, and `ExternsFilename` is removed — a
+  functy source declares at most one namespace. A host registers them with a loop:
+
+  ```go
+  for name, src := range geocty.Externs() {
+      parser.RegisterExterns(src, name)
+  }
+  ```
+
+  The `geopoint` type is unchanged and stays un-namespaced (it is a type, not a function).
+
 ## v0.3.0
 
 ### Added

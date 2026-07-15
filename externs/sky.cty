@@ -1,0 +1,48 @@
+//functy:extern
+
+namespace sky
+
+// The solar-event and celestial-position functions, provided in Go by geo-cty-funcs
+// (GetGeoFunctions). Signatures only — never compiled, nothing here is callable.
+//
+// Each takes an optional time (defaulting to now) faked with a variadic, which cty can
+// only make trailing and which erases its name and type; and their point argument is a
+// `dynamic` object, which poisons cty's return type to `dynamic`, hiding the returned
+// azimuth/altitude. The declarations state both, and type the inputs as `geopoint` (see
+// IsGeoPoint) — the open type a host registers for "an object with numeric lat and lon".
+// Standalone, `functy check` will flag geopoint and time as unregistered, which is
+// expected: the host that provides these functions registers them.
+
+// ---- sun & moon position ----
+
+// The sun's azimuth (degrees clockwise from north) and altitude (degrees above the
+// horizon) as seen from a point, at time t (default now).
+func sun_position(point: geopoint, t?: time) -> object({ azimuth = number, altitude = number })
+
+// The moon's azimuth, altitude (degrees), and distance (meters) as seen from a point, at
+// time t (default now).
+func moon_position(point: geopoint, t?: time) -> object({ azimuth = number, altitude = number, distance = number })
+
+// The moon's illuminated fraction, phase (0 = new, 0.5 = full), and bright-limb angle
+// (degrees), at time t (default now). Phase is global, so no location is needed.
+func moon_phase(t?: time) -> object({ fraction = number, phase = number, angle = number })
+
+// ---- solar events ----
+
+// The four solar-event functions share one signature. Each returns the next occurrence
+// of the event strictly after a reference time (default now), optionally shifted by a
+// duration offset. The offset and the reference time are both optional and may be given
+// in either order — they are told apart by type — so `sky::sunrise(point, "-PT30M")` is
+// half an hour before sunrise and `sky::sunrise(point, t)` is the next sunrise after t.
+
+// The next sunrise after the reference time.
+func sunrise(point: geopoint, offset?: duration, t?: time) -> time
+
+// The next sunset after the reference time.
+func sunset(point: geopoint, offset?: duration, t?: time) -> time
+
+// The next solar noon after the reference time.
+func solar_noon(point: geopoint, offset?: duration, t?: time) -> time
+
+// The next solar midnight after the reference time.
+func solar_midnight(point: geopoint, offset?: duration, t?: time) -> time

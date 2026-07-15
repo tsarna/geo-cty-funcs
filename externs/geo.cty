@@ -1,0 +1,79 @@
+//functy:extern
+
+namespace geo
+
+// The geographic, geodesic, and geometric functions, provided in Go by geo-cty-funcs
+// (GetGeoFunctions). Signatures only — never compiled, nothing here is callable.
+//
+// Every function is declared, for one of two reasons. Some fake an optional or
+// type-dispatched argument with a variadic, or vary their result shape, and cty cannot
+// describe them at all. The rest have a fixed arity and a fixed return shape — but their
+// point arguments are objects with arbitrary extra attributes, so their cty parameter
+// type is `dynamic`, and a dynamic argument poisons cty's return type to `dynamic` too.
+// Their whole return payload — the distance and bearing, the lat/lon/track of each
+// waypoint — is therefore invisible in reflected metadata. The declaration is the only
+// place it, and the `geopoint` shape of the inputs, can be stated.
+//
+// `geopoint` is the open type a host registers for "an object with numeric lat and lon"
+// (see IsGeoPoint); extra attributes — altitude, time, speed — are allowed and, where a
+// function preserves them, carried through. Standalone, `functy check` will flag it as
+// unregistered, which is expected: the host that provides these functions registers it.
+
+// ---- fixed-shape functions (declared for their return shape and geopoint inputs) ----
+
+// Distance (meters), initial bearing, and back bearing between two points, along the
+// geodesic on the WGS-84 ellipsoid.
+func inverse(point_a: geopoint, point_b: geopoint) -> object({ distance = number, bearing = number, back_bearing = number })
+
+// n evenly spaced points along the geodesic between two points, including both endpoints
+// (n >= 2). Each carries its `track`: the bearing to follow on leaving it.
+func waypoints(point_a: geopoint, point_b: geopoint, n: number) -> list(object({ lat = number, lon = number, track = number }))
+
+// The area a polygon encloses, in square meters. The polygon is a list of at least three
+// points and need not be explicitly closed.
+func area(polygon: list(geopoint)) -> number
+
+// Whether a point lies inside a polygon (a list of at least three points).
+func contains(polygon: list(geopoint), point: geopoint) -> bool
+
+// The point on a polygon's perimeter closest to the given point, as a bare {lat, lon}.
+func nearest(polygon: list(geopoint), point: geopoint) -> object({ lat = number, lon = number })
+
+// Every point where two polylines cross, each as a bare {lat, lon}; empty if they do not
+// cross. Each line is a list of at least two points.
+func line_intersect(line_a: list(geopoint), line_b: list(geopoint)) -> list(object({ lat = number, lon = number }))
+
+// ---- points ----
+
+// Construct a point from coordinates, optionally merged onto a base object.
+//
+// Numbers are signed decimal degrees; strings are parsed as decimal, hemisphere-
+// annotated ("40.7N"), or DMS. A single string argument is a combined "lat,lon" or
+// "DMS DMS". A base object's attributes other than lat/lon are carried onto the result,
+// so a point's metadata (time, speed, name) survives being re-coordinated.
+func point(coords: string) -> geopoint
+func point(coords: string, base) -> geopoint
+func point(lat, lon) -> geopoint
+func point(lat, lon, base) -> geopoint
+
+// Format a point as a string.
+func format(
+    point: geopoint,
+    format: string = "decimal",  // "decimal", "decimal_alt", "dms", "dms_ascii", or "dms_signed"
+) -> string
+
+// ---- geodesics ----
+
+// The point reached by travelling from origin on a bearing. How far is set by the third
+// argument, dispatched on its type:
+//
+//   number    a distance in meters
+//   duration  travel time — origin must carry a `speed` (meters/second)
+//   time      travel until this instant — origin must carry `speed` and `time`
+//
+// The result keeps origin's other attributes; the duration and time forms also advance
+// its `time`. Trailing `overrides` objects are merged onto origin first, so speed or a
+// starting time can be supplied inline.
+func destination(origin: geopoint, bearing: number, distance: number, *overrides) -> geopoint
+func destination(origin: geopoint, bearing: number, travel: duration, *overrides) -> geopoint
+func destination(origin: geopoint, bearing: number, until: time, *overrides) -> geopoint

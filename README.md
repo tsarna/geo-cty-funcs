@@ -49,23 +49,26 @@ parser.RegisterOpenType("geopoint", geocty.IsGeoPoint)
 ## Signature declarations
 
 The signatures these functions really have are not the ones cty can express, for two
-reasons. Some fake an optional or type-dispatched argument with a variadic — `geo_format`'s
-format, the solar functions' offset and time, the union third argument of `geo_destination`
-— or vary their result shape, as `geo_point` does when it merges a base; cty cannot describe
+reasons. Some fake an optional or type-dispatched argument with a variadic — `geo::format`'s
+format, the solar functions' offset and time, the union third argument of `geo::destination`
+— or vary their result shape, as `geo::point` does when it merges a base; cty cannot describe
 these at all. The rest have a fixed arity and a fixed return shape, but their point arguments
 are objects with arbitrary extras, so their cty parameter type is `dynamic` — and a dynamic
 argument poisons cty's return type to `dynamic` too, hiding the whole return payload
-(`geo_inverse`'s `{distance, bearing, back_bearing}` reflects as nothing).
+(`geo::inverse`'s `{distance, bearing, back_bearing}` reflects as nothing).
 
-So `externs.cty` declares every function as a functy `//functy:extern` declaration, typing
-the point arguments as `geopoint` and spelling out each return shape. The file is never
-compiled and declares nothing callable; it exists so `help()`, generated documentation, and
-editor tooling can show the real signatures. `Externs()` returns it as opaque bytes — this
-package does not import functy:
+So `externs/geo.cty` and `externs/sky.cty` declare every function as a functy
+`//functy:extern` declaration — one file per namespace — typing the point arguments as
+`geopoint` and spelling out each return shape. They are never compiled and declare nothing
+callable; they exist so `help()`, generated documentation, and editor tooling can show the
+real signatures. `Externs()` returns them as opaque bytes keyed by filename — this package
+does not import functy:
 
 ```go
 parser.RegisterOpenType("geopoint", geocty.IsGeoPoint)
-parser.RegisterExterns(geocty.Externs(), geocty.ExternsFilename)
+for name, src := range geocty.Externs() {
+    parser.RegisterExterns(src, name)
+}
 ```
 
 A host that is not a functy host can ignore both; the cty `Description` on every function
@@ -77,13 +80,13 @@ and parameter is still populated.
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `geo_point` | `geo_point(combined)` or `geo_point(lat, lon[, base])` | Constructs a point from a combined string or separate lat/lon |
-| `geo_format` | `geo_format(point[, format])` | Formats a point as a string |
+| `geo::point` | `geo::point(combined)` or `geo::point(lat, lon[, base])` | Constructs a point from a combined string or separate lat/lon |
+| `geo::format` | `geo::format(point[, format])` | Formats a point as a string |
 
-#### `geo_point(combined[, base])` or `geo_point(lat, lon[, base])`
+#### `geo::point(combined[, base])` or `geo::point(lat, lon[, base])`
 
 A single combined string is parsed by splitting on `,` (decimal formats) or on
-the hemisphere-letter boundary (DMS formats). All `geo_format` output formats
+the hemisphere-letter boundary (DMS formats). All `geo::format` output formats
 round-trip through the single-string form.
 
 When two separate values are given, `lat` and `lon` may each be a **number**
@@ -98,15 +101,15 @@ When two separate values are given, `lat` and `lon` may each be a **number**
 If `base` is supplied, the result is a copy of `base` with `lat`/`lon` overwritten.
 
 ```hcl
-geo_point("37.7749,-122.4194")
-geo_point("37°46'29\"N 122°25'9\"W")
-geo_point(37.7749, -122.4194)
-geo_point("37°46'29\"N", "122°25'9\"W")
-geo_point(37.7749, -122.4194, {alt = 11.0, track = 90.0})
-geo_point("37.7749,-122.4194", {alt = 11.0})
+geo::point("37.7749,-122.4194")
+geo::point("37°46'29\"N 122°25'9\"W")
+geo::point(37.7749, -122.4194)
+geo::point("37°46'29\"N", "122°25'9\"W")
+geo::point(37.7749, -122.4194, {alt = 11.0, track = 90.0})
+geo::point("37.7749,-122.4194", {alt = 11.0})
 ```
 
-#### `geo_format(point[, format])`
+#### `geo::format(point[, format])`
 
 | Format | Example |
 |--------|---------|
@@ -135,21 +138,21 @@ the function advances to the next day. All times are UTC.
 
 In **polar regions** where the sun does not rise or set for extended periods,
 the functions search forward day-by-day (up to 400 days) until the event
-occurs again. `solar_noon` and `solar_midnight` require both sunrise and
+occurs again. `sky::solar_noon` and `sky::solar_midnight` require both sunrise and
 sunset to exist on the relevant day(s); during polar day or polar night they
 return the first meaningful occurrence after polar conditions end.
 
 | Function | Description |
 |----------|-------------|
-| `sunrise` | Next sunrise |
-| `sunset` | Next sunset |
-| `solar_noon` | Next solar noon (midpoint of sunrise and sunset) |
-| `solar_midnight` | Next solar midnight (midpoint of sunset and next sunrise) |
+| `sky::sunrise` | Next sunrise |
+| `sky::sunset` | Next sunset |
+| `sky::solar_noon` | Next solar noon (midpoint of sunrise and sunset) |
+| `sky::solar_midnight` | Next solar midnight (midpoint of sunset and next sunrise) |
 
 ```hcl
-time = sunrise(var.location)
-time = sunrise(var.location, duration("-30m"))
-time = sunset(var.location, duration("-15m"), ctx.scheduled_time)
+time = sky::sunrise(var.location)
+time = sky::sunrise(var.location, duration("-30m"))
+time = sky::sunset(var.location, duration("-15m"), ctx.scheduled_time)
 ```
 
 ---
@@ -158,9 +161,9 @@ time = sunset(var.location, duration("-15m"), ctx.scheduled_time)
 
 | Function | Signature | Returns |
 |----------|-----------|---------|
-| `sun_position` | `sun_position(point[, t])` | `{azimuth, altitude}` (degrees) |
-| `moon_position` | `moon_position(point[, t])` | `{azimuth, altitude, distance}` (degrees, meters) |
-| `moon_phase` | `moon_phase([t])` | `{fraction, phase, angle}` |
+| `sky::sun_position` | `sky::sun_position(point[, t])` | `{azimuth, altitude}` (degrees) |
+| `sky::moon_position` | `sky::moon_position(point[, t])` | `{azimuth, altitude, distance}` (degrees, meters) |
+| `sky::moon_phase` | `sky::moon_phase([t])` | `{fraction, phase, angle}` |
 
 - **azimuth**: clockwise from true north (0=N, 90=E, 180=S, 270=W)
 - **altitude**: degrees above horizon (negative = below)
@@ -170,11 +173,11 @@ time = sunset(var.location, duration("-15m"), ctx.scheduled_time)
 - **angle**: bright-limb angle in degrees (sign distinguishes waxing/waning)
 
 ```hcl
-s = sun_position(var.location)
+s = sky::sun_position(var.location)
 s.altitude > 0            # true if the sun is up
 s.altitude < -6.0         # true if past civil twilight
 
-mp = moon_phase()
+mp = sky::moon_phase()
 mp.phase < 0.5            # true if waxing
 ```
 
@@ -184,22 +187,22 @@ mp.phase < 0.5            # true if waxing
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `geo_inverse` | `geo_inverse(a, b)` | Distance and bearings between two points |
-| `geo_destination` | `geo_destination(origin, bearing, third[, extras])` | Point reached by travelling on a bearing |
-| `geo_waypoints` | `geo_waypoints(a, b, n)` | n evenly spaced points along the geodesic |
+| `geo::inverse` | `geo::inverse(a, b)` | Distance and bearings between two points |
+| `geo::destination` | `geo::destination(origin, bearing, third[, extras])` | Point reached by travelling on a bearing |
+| `geo::waypoints` | `geo::waypoints(a, b, n)` | n evenly spaced points along the geodesic |
 
-#### `geo_inverse(point_a, point_b)`
+#### `geo::inverse(point_a, point_b)`
 
 Returns `{distance, bearing, back_bearing}`. Distance in meters, bearings in
 degrees clockwise from north.
 
 ```hcl
-r = geo_inverse(var.current, var.destination)
+r = geo::inverse(var.current, var.destination)
 r.distance    # meters
 r.bearing     # heading toward destination
 ```
 
-#### `geo_destination(origin, bearing, third[, extras])`
+#### `geo::destination(origin, bearing, third[, extras])`
 
 The third argument selects how far to travel, dispatched on type:
 
@@ -213,19 +216,19 @@ preserved in the result; only `lat`/`lon` (and `time` for duration/time forms)
 are updated.
 
 ```hcl
-dest = geo_destination(var.location, 90.0, 1000.0)
-future = geo_destination(var.vehicle, var.vehicle.track, duration("5m"))
-projected = geo_destination({lat = 37.7, lon = -122.4}, 90.0, duration("10m"),
+dest = geo::destination(var.location, 90.0, 1000.0)
+future = geo::destination(var.vehicle, var.vehicle.track, duration("5m"))
+projected = geo::destination({lat = 37.7, lon = -122.4}, 90.0, duration("10m"),
                             {speed = 15.0, time = now()})
 ```
 
-#### `geo_waypoints(point_a, point_b, n)`
+#### `geo::waypoints(point_a, point_b, n)`
 
 Returns a list of `n` (>= 2) evenly spaced `{lat, lon, track}` objects along
 the geodesic, including both endpoints.
 
 ```hcl
-waypoints = geo_waypoints(var.origin, var.destination, 5)
+waypoints = geo::waypoints(var.origin, var.destination, 5)
 ```
 
 ---
@@ -234,30 +237,30 @@ waypoints = geo_waypoints(var.origin, var.destination, 5)
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `geo_area` | `geo_area(polygon)` | Area in square meters |
-| `geo_contains` | `geo_contains(polygon, point)` | Point-in-polygon test |
-| `geo_nearest` | `geo_nearest(polygon, point)` | Nearest point on perimeter |
-| `geo_line_intersect` | `geo_line_intersect(line_a, line_b)` | Intersection points of two polylines |
+| `geo::area` | `geo::area(polygon)` | Area in square meters |
+| `geo::contains` | `geo::contains(polygon, point)` | Point-in-polygon test |
+| `geo::nearest` | `geo::nearest(polygon, point)` | Nearest point on perimeter |
+| `geo::line_intersect` | `geo::line_intersect(line_a, line_b)` | Intersection points of two polylines |
 
 A polygon is a `list(point)`, implicitly closed. Fewer than 3 points is an error.
 
-#### `geo_area(polygon)`
+#### `geo::area(polygon)`
 
 Returns area in square meters. Orientation-independent.
 
-#### `geo_contains(polygon, point)`
+#### `geo::contains(polygon, point)`
 
 Returns `true` if `point` is inside the polygon.
 
 ```hcl
-geo_contains(var.home_zone, var.vehicle_position)
+geo::contains(var.home_zone, var.vehicle_position)
 ```
 
-#### `geo_nearest(polygon, point)`
+#### `geo::nearest(polygon, point)`
 
 Returns the closest `{lat, lon}` on the polygon perimeter (may be mid-edge).
 
-#### `geo_line_intersect(line_a, line_b)`
+#### `geo::line_intersect(line_a, line_b)`
 
 Returns a list of `{lat, lon}` intersection points. Empty list if no crossings.
 Each line must have at least 2 points.

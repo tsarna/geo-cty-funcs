@@ -8,23 +8,33 @@ import "github.com/zclconf/go-cty/cty/function"
 
 // GetGeoFunctions returns all geographic cty functions for registration in an
 // eval context.
+//
+// The names are namespaced. The geographic, geodesic, and geometric functions —
+// whose bare names (point, area, contains, nearest) would be too generic to expose
+// globally — live under `geo::`. The solar-event and celestial-position functions
+// live under `sky::`. HCL parses `a::b(x)` natively as a single flat map key, so this
+// is a naming choice, not a structural one, and the leaf names drop the redundant
+// prefix the flat names carried.
 func GetGeoFunctions() map[string]function.Function {
 	return map[string]function.Function{
-		"geo_point":       GeoPointFunc,
-		"geo_format":      GeoFormatFunc,
-		"sunrise":         SunriseFunc,
-		"sunset":          SunsetFunc,
-		"solar_noon":      SolarNoonFunc,
-		"solar_midnight":  SolarMidnightFunc,
-		"sun_position":    SunPositionFunc,
-		"moon_position":   MoonPositionFunc,
-		"moon_phase":      MoonPhaseFunc,
-		"geo_inverse":     GeoInverseFunc,
-		"geo_destination": GeoDestinationFunc,
-		"geo_waypoints":       GeoWaypointsFunc,
-		"geo_area":            GeoAreaFunc,
-		"geo_contains":        GeoContainsFunc,
-		"geo_nearest":         GeoNearestFunc,
-		"geo_line_intersect":  GeoLineIntersectFunc,
+		// Geographic, geodesic, geometric.
+		"geo::point":          GeoPointFunc,
+		"geo::format":         GeoFormatFunc,
+		"geo::destination":    GeoDestinationFunc,
+		"geo::inverse":        GeoInverseFunc,
+		"geo::waypoints":      GeoWaypointsFunc,
+		"geo::area":           GeoAreaFunc,
+		"geo::contains":       GeoContainsFunc,
+		"geo::nearest":        GeoNearestFunc,
+		"geo::line_intersect": GeoLineIntersectFunc,
+
+		// Solar events and celestial position.
+		"sky::sunrise":        SunriseFunc,
+		"sky::sunset":         SunsetFunc,
+		"sky::solar_noon":     SolarNoonFunc,
+		"sky::solar_midnight": SolarMidnightFunc,
+		"sky::sun_position":   SunPositionFunc,
+		"sky::moon_position":  MoonPositionFunc,
+		"sky::moon_phase":     MoonPhaseFunc,
 	}
 }
