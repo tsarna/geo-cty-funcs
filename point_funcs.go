@@ -20,11 +20,16 @@ import (
 var GeoPointFunc = function.New(&function.Spec{
 	Description: "Constructs a point object from lat/lon, optionally merged onto a base object.",
 	Params: []function.Parameter{
-		{Name: "first", Type: cty.DynamicPseudoType},
+		{
+			Name:        "first",
+			Type:        cty.DynamicPseudoType,
+			Description: "Either a combined \"lat,lon\" (or \"DMS DMS\") string, or the latitude as a number or string",
+		},
 	},
 	VarParam: &function.Parameter{
-		Name: "rest",
-		Type: cty.DynamicPseudoType,
+		Name:        "rest",
+		Type:        cty.DynamicPseudoType,
+		Description: "The remaining arguments: an optional longitude (with a numeric/string first), and/or a base object whose extra attributes are carried onto the result. See help(\"geo_point\") for the exact forms.",
 	},
 	Type: func(args []cty.Value) (cty.Type, error) {
 		if len(args) > 3 {
@@ -127,11 +132,16 @@ func parseCombinedString(s string) (cty.Value, cty.Value, error) {
 var GeoFormatFunc = function.New(&function.Spec{
 	Description: "Formats a point as a string.",
 	Params: []function.Parameter{
-		{Name: "point", Type: cty.DynamicPseudoType},
+		{
+			Name:        "point",
+			Type:        cty.DynamicPseudoType,
+			Description: "A point object (numeric lat and lon)",
+		},
 	},
 	VarParam: &function.Parameter{
-		Name: "format",
-		Type: cty.String,
+		Name:        "format",
+		Type:        cty.String,
+		Description: "Optional format name (at most one): \"decimal\" (default), \"decimal_alt\", \"dms\", \"dms_ascii\", or \"dms_signed\"",
 	},
 	Type: function.StaticReturnType(cty.String),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {

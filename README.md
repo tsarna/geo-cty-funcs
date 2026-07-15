@@ -37,6 +37,40 @@ p = {lat = 37.7749, lon = -122.4194}
 p2 = {lat = 51.5074, lon = -0.1278, alt = 11.0, speed = 10.0}
 ```
 
+`IsGeoPoint(cty.Value) error` is that shape as a predicate — nil when the value is an
+object with numeric `lat` and `lon`, an error otherwise. A [functy](https://github.com/tsarna/functy)
+host registers it as the open type `geopoint`, so a `.cty` annotation or a host variable
+constraint can require a point while letting the extra fields ride along:
+
+```go
+parser.RegisterOpenType("geopoint", geocty.IsGeoPoint)
+```
+
+## Signature declarations
+
+The signatures these functions really have are not the ones cty can express, for two
+reasons. Some fake an optional or type-dispatched argument with a variadic — `geo_format`'s
+format, the solar functions' offset and time, the union third argument of `geo_destination`
+— or vary their result shape, as `geo_point` does when it merges a base; cty cannot describe
+these at all. The rest have a fixed arity and a fixed return shape, but their point arguments
+are objects with arbitrary extras, so their cty parameter type is `dynamic` — and a dynamic
+argument poisons cty's return type to `dynamic` too, hiding the whole return payload
+(`geo_inverse`'s `{distance, bearing, back_bearing}` reflects as nothing).
+
+So `externs.cty` declares every function as a functy `//functy:extern` declaration, typing
+the point arguments as `geopoint` and spelling out each return shape. The file is never
+compiled and declares nothing callable; it exists so `help()`, generated documentation, and
+editor tooling can show the real signatures. `Externs()` returns it as opaque bytes — this
+package does not import functy:
+
+```go
+parser.RegisterOpenType("geopoint", geocty.IsGeoPoint)
+parser.RegisterExterns(geocty.Externs(), geocty.ExternsFilename)
+```
+
+A host that is not a functy host can ignore both; the cty `Description` on every function
+and parameter is still populated.
+
 ## Functions
 
 ### Point Construction and Formatting

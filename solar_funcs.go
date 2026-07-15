@@ -120,11 +120,12 @@ func makeSolarFunc(desc string, ef eventFunc) function.Function {
 	return function.New(&function.Spec{
 		Description: desc,
 		Params: []function.Parameter{
-			{Name: "point", Type: cty.DynamicPseudoType},
+			{Name: "point", Type: cty.DynamicPseudoType, Description: "The observer's location (numeric lat and lon)"},
 		},
 		VarParam: &function.Parameter{
-			Name: "args",
-			Type: cty.DynamicPseudoType,
+			Name:        "args",
+			Type:        cty.DynamicPseudoType,
+			Description: "Up to two, in either order: a duration offset added to the event, and a reference time the search starts after (defaults to now)",
 		},
 		Type: function.StaticReturnType(timecty.TimeCapsuleType),
 		Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {

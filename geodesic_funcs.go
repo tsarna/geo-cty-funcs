@@ -25,8 +25,8 @@ var geoInverseResultType = cty.Object(map[string]cty.Type{
 var GeoInverseFunc = function.New(&function.Spec{
 	Description: "Returns distance (meters), bearing, and back_bearing between two points.",
 	Params: []function.Parameter{
-		{Name: "point_a", Type: cty.DynamicPseudoType},
-		{Name: "point_b", Type: cty.DynamicPseudoType},
+		{Name: "point_a", Type: cty.DynamicPseudoType, Description: "The origin point (numeric lat and lon)"},
+		{Name: "point_b", Type: cty.DynamicPseudoType, Description: "The destination point (numeric lat and lon)"},
 	},
 	Type: function.StaticReturnType(geoInverseResultType),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
@@ -53,13 +53,18 @@ var GeoInverseFunc = function.New(&function.Spec{
 var GeoDestinationFunc = function.New(&function.Spec{
 	Description: "Returns the point reached by travelling from origin on a bearing for a distance, duration, or until a target time.",
 	Params: []function.Parameter{
-		{Name: "origin", Type: cty.DynamicPseudoType},
-		{Name: "bearing", Type: cty.Number},
-		{Name: "distance_or_duration_or_time", Type: cty.DynamicPseudoType},
+		{Name: "origin", Type: cty.DynamicPseudoType, Description: "The starting point (numeric lat and lon); its extra attributes are carried onto the result"},
+		{Name: "bearing", Type: cty.Number, Description: "Initial bearing in degrees clockwise from north"},
+		{
+			Name:        "distance_or_duration_or_time",
+			Type:        cty.DynamicPseudoType,
+			Description: "How far to travel: a number of meters, a duration (requires origin.speed), or a target time (requires origin.speed and origin.time)",
+		},
 	},
 	VarParam: &function.Parameter{
-		Name: "extras",
-		Type: cty.DynamicPseudoType,
+		Name:        "extras",
+		Type:        cty.DynamicPseudoType,
+		Description: "Optional additional objects merged onto origin before travelling (e.g. to supply speed or time); later objects win on key conflicts",
 	},
 	Type: function.StaticReturnType(cty.DynamicPseudoType),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
@@ -170,9 +175,9 @@ var GeoDestinationFunc = function.New(&function.Spec{
 var GeoWaypointsFunc = function.New(&function.Spec{
 	Description: "Returns n evenly spaced points along the geodesic between two points.",
 	Params: []function.Parameter{
-		{Name: "point_a", Type: cty.DynamicPseudoType},
-		{Name: "point_b", Type: cty.DynamicPseudoType},
-		{Name: "n", Type: cty.Number},
+		{Name: "point_a", Type: cty.DynamicPseudoType, Description: "The start point (numeric lat and lon), returned as the first waypoint"},
+		{Name: "point_b", Type: cty.DynamicPseudoType, Description: "The end point (numeric lat and lon), returned as the last waypoint"},
+		{Name: "n", Type: cty.Number, Description: "How many waypoints to return, including both endpoints (must be >= 2)"},
 	},
 	Type: function.StaticReturnType(cty.List(cty.Object(map[string]cty.Type{
 		"lat":   cty.Number,

@@ -32,11 +32,12 @@ var moonPhaseResultType = cty.Object(map[string]cty.Type{
 var SunPositionFunc = function.New(&function.Spec{
 	Description: "Returns the sun's azimuth (degrees, clockwise from north) and altitude (degrees above horizon).",
 	Params: []function.Parameter{
-		{Name: "point", Type: cty.DynamicPseudoType},
+		{Name: "point", Type: cty.DynamicPseudoType, Description: "The observer's location (numeric lat and lon)"},
 	},
 	VarParam: &function.Parameter{
-		Name: "t",
-		Type: timecty.TimeCapsuleType,
+		Name:        "t",
+		Type:        timecty.TimeCapsuleType,
+		Description: "Optional observation time (at most one); defaults to now",
 	},
 	Type: function.StaticReturnType(sunPositionResultType),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
@@ -67,11 +68,12 @@ var SunPositionFunc = function.New(&function.Spec{
 var MoonPositionFunc = function.New(&function.Spec{
 	Description: "Returns the moon's azimuth (degrees), altitude (degrees), and distance (meters).",
 	Params: []function.Parameter{
-		{Name: "point", Type: cty.DynamicPseudoType},
+		{Name: "point", Type: cty.DynamicPseudoType, Description: "The observer's location (numeric lat and lon)"},
 	},
 	VarParam: &function.Parameter{
-		Name: "t",
-		Type: timecty.TimeCapsuleType,
+		Name:        "t",
+		Type:        timecty.TimeCapsuleType,
+		Description: "Optional observation time (at most one); defaults to now",
 	},
 	Type: function.StaticReturnType(moonPositionResultType),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
@@ -103,8 +105,9 @@ var MoonPhaseFunc = function.New(&function.Spec{
 	Description: "Returns the moon's illuminated fraction, phase (0=new, 0.5=full), and bright-limb angle (degrees).",
 	Params:      []function.Parameter{},
 	VarParam: &function.Parameter{
-		Name: "t",
-		Type: timecty.TimeCapsuleType,
+		Name:        "t",
+		Type:        timecty.TimeCapsuleType,
+		Description: "Optional time (at most one); defaults to now. Moon phase is global, so no location is needed",
 	},
 	Type: function.StaticReturnType(moonPhaseResultType),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {

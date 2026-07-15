@@ -17,7 +17,7 @@ const earthRadiusM = 6371010.0
 var GeoAreaFunc = function.New(&function.Spec{
 	Description: "Returns the area enclosed by a polygon (list of points) in square meters.",
 	Params: []function.Parameter{
-		{Name: "polygon", Type: cty.DynamicPseudoType},
+		{Name: "polygon", Type: cty.DynamicPseudoType, Description: "A list of point objects (numeric lat/lon) forming the ring; at least 3, and it need not be explicitly closed"},
 	},
 	Type: function.StaticReturnType(cty.Number),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
@@ -35,8 +35,8 @@ var GeoAreaFunc = function.New(&function.Spec{
 var GeoContainsFunc = function.New(&function.Spec{
 	Description: "Returns true if the point is inside the polygon.",
 	Params: []function.Parameter{
-		{Name: "polygon", Type: cty.DynamicPseudoType},
-		{Name: "point", Type: cty.DynamicPseudoType},
+		{Name: "polygon", Type: cty.DynamicPseudoType, Description: "A list of point objects (numeric lat/lon) forming the ring; at least 3"},
+		{Name: "point", Type: cty.DynamicPseudoType, Description: "The point to test (numeric lat and lon)"},
 	},
 	Type: function.StaticReturnType(cty.Bool),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
@@ -57,8 +57,8 @@ var GeoContainsFunc = function.New(&function.Spec{
 var GeoNearestFunc = function.New(&function.Spec{
 	Description: "Returns the nearest point on the polygon perimeter to the given point.",
 	Params: []function.Parameter{
-		{Name: "polygon", Type: cty.DynamicPseudoType},
-		{Name: "point", Type: cty.DynamicPseudoType},
+		{Name: "polygon", Type: cty.DynamicPseudoType, Description: "A list of point objects (numeric lat/lon) forming the ring; at least 3"},
+		{Name: "point", Type: cty.DynamicPseudoType, Description: "The point to measure from (numeric lat and lon)"},
 	},
 	Type: function.StaticReturnType(cty.Object(map[string]cty.Type{
 		"lat": cty.Number,
@@ -98,8 +98,8 @@ var lineIntersectResultType = cty.List(cty.Object(map[string]cty.Type{
 var GeoLineIntersectFunc = function.New(&function.Spec{
 	Description: "Returns all intersection points between two polylines.",
 	Params: []function.Parameter{
-		{Name: "line_a", Type: cty.DynamicPseudoType},
-		{Name: "line_b", Type: cty.DynamicPseudoType},
+		{Name: "line_a", Type: cty.DynamicPseudoType, Description: "A polyline: a list of point objects (numeric lat/lon), at least 2"},
+		{Name: "line_b", Type: cty.DynamicPseudoType, Description: "A second polyline: a list of point objects (numeric lat/lon), at least 2"},
 	},
 	Type: function.StaticReturnType(lineIntersectResultType),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
