@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.5.0
+
+### Changed
+
+- **Deprecated: this module has moved to
+  [`github.com/tsarna/ctyx`](https://github.com/tsarna/ctyx).** The package is
+  now `github.com/tsarna/ctyx/geocty`, merged there with eight sibling modules.
+  Its contents and API are unchanged — only the import path moved, so migrating
+  is a path rewrite plus a `require` swap.
+
+  No code changed in this release. It exists to carry the `// Deprecated:`
+  marker on `go.mod`, which is what `go list -m -u` and pkg.go.dev report. It is
+  a minor rather than a patch bump because the module is no longer maintained
+  here: this repository is archived, and development continues in ctyx.
+
 ## v0.4.0
 
 ### Changed
